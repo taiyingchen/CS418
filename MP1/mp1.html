@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>MP1: Dancing Logo</title>
+ 
+<script id="shader-vs" type="x-shader/x-vertex">
+attribute vec4 aVertexColor;
+attribute vec3 aVertexPosition;
+uniform mat4 uMVMatrix;
+uniform mat4 uPMatrix;
+varying vec4 vColor;
+void main(void) {
+  gl_Position = vec4(aVertexPosition, 1.0);
+  vColor = aVertexColor;
+}
+</script><script id="shader-fs" type="x-shader/x-fragment">
+precision mediump float;
+varying vec4 vColor;
+void main(void) {
+  gl_FragColor = vColor;
+}
+</script>
+<script src="./mp1_files/gl-matrix-min.js"></script>
+<script type="text/javascript" src="./mp1_files/webgl-utils.js"></script>
+<script src="./mp1_files/mp1.js"></script></head>
+
+<body onload="startup();" data-gr-c-s-loaded="true">
+  <canvas id="myGLCanvas" width="500" height="500"></canvas>
+</body></html>
