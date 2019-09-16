@@ -19,6 +19,15 @@ var vertexPositionBuffer;
 /** @global The WebGL buffer holding the vertex colors */
 var vertexColorBuffer;
 
+/** @global The Modelview matrix */
+var mvMatrix = mat4.create();
+
+/** @global The Projection matrix */
+var pMatrix = mat4.create();
+
+/** @global The angle of rotation around the x axis */
+var rotAngle = 0;
+
 /**
  * Creates a context for WebGL
  * @param {element} canvas WebGL canvas
@@ -42,13 +51,13 @@ function createGLContext(canvas) {
  */
 function loadShaderFromDOM(id) {
   var shaderScript = document.getElementById(id);
-  
+
   // If we don't find an element with the specified id
   // we do an early exit 
   if (!shaderScript) {
     return null;
   }
-  
+
   // Loop through the children for the found DOM element and
   // build up the shader source code as a string
   var shaderSource = "";
@@ -59,7 +68,7 @@ function loadShaderFromDOM(id) {
     }
     currentChild = currentChild.nextSibling;
   }
- 
+
   var shader;
   if (shaderScript.type == "x-shader/x-fragment") {
     shader = gl.createShader(gl.FRAGMENT_SHADER);
@@ -68,14 +77,14 @@ function loadShaderFromDOM(id) {
   } else {
     return null;
   }
- 
+
   gl.shaderSource(shader, shaderSource);
   gl.compileShader(shader);
- 
+
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     alert(gl.getShaderInfoLog(shader));
     return null;
-  } 
+  }
   return shader;
 }
 
@@ -85,7 +94,7 @@ function loadShaderFromDOM(id) {
 function setupShaders() {
   vertexShader = loadShaderFromDOM("shader-vs");
   fragmentShader = loadShaderFromDOM("shader-fs");
-  
+
   shaderProgram = gl.createProgram();
   gl.attachShader(shaderProgram, vertexShader);
   gl.attachShader(shaderProgram, fragmentShader);
@@ -97,16 +106,15 @@ function setupShaders() {
 
   gl.useProgram(shaderProgram);
   shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+  gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 
-  shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor"); 
+  shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
+  gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
+  shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+  shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
 }
 
-/**
- * Populate buffers with data
- */
-function setupBuffers() {
-  vertexPositionBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
+function loadVertices() {
   var triangleVertices = [
     // Blue: top
     -0.55, 0.45, 0.0,
@@ -123,7 +131,7 @@ function setupBuffers() {
     0.55, 0.85, 0.0,
     0.35, 0.45, 0.0,
     0.55, 0.85, 0.0,
-    0.55, 0.45, 0.0, 
+    0.55, 0.45, 0.0,
     // Body
     -0.35, 0.45, 0.0,
     0.35, 0.45, 0.0,
@@ -133,7 +141,7 @@ function setupBuffers() {
     0.35, -0.45, 0.0,
     -0.35, 0.0, 0.0,
     0.35, -0.45, 0.0,
-    -0.35, -0.45, 0.0,    
+    -0.35, -0.45, 0.0,
     // Bottom
     -0.55, -0.45, 0.0,
     -0.55, -0.85, 0.0,
@@ -165,7 +173,7 @@ function setupBuffers() {
     0.5, 0.8, 0.0,
     0.3, 0.5, 0.0,
     0.5, 0.8, 0.0,
-    0.5, 0.5, 0.0, 
+    0.5, 0.5, 0.0,
     // Body
     -0.3, 0.5, 0.0,
     0.3, 0.5, 0.0,
@@ -175,7 +183,7 @@ function setupBuffers() {
     0.3, -0.5, 0.0,
     -0.3, 0.0, 0.0,
     0.3, -0.5, 0.0,
-    -0.3, -0.5, 0.0,    
+    -0.3, -0.5, 0.0,
     // Bottom
     -0.5, -0.5, 0.0,
     -0.5, -0.8, 0.0,
@@ -191,59 +199,133 @@ function setupBuffers() {
     0.5, -0.8, 0.0,
     0.3, -0.5, 0.0,
     0.5, -0.8, 0.0,
-    0.5, -0.5, 0.0,      
+    0.5, -0.5, 0.0,
   ];
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangleVertices), gl.STATIC_DRAW);
+
+  vertexPositionBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
+
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangleVertices), gl.DYNAMIC_DRAW);
   vertexPositionBuffer.itemSize = 3;
   vertexPositionBuffer.numberOfItems = triangleVertices.length / vertexPositionBuffer.itemSize;
-    
+}
+
+function loadColors() {
   vertexColorBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer);
   var blue = [
-    19/256, 41/256, 74/256, 1.0
+    19 / 256, 41 / 256, 74 / 256, 1.0
   ];
   var orange = [
-    234/256, 76/256, 39/256, 1.0
+    234 / 256, 76 / 256, 39 / 256, 1.0
   ];
   var colors = [];
   for (var i = 0; i < vertexPositionBuffer.numberOfItems; i++) {
     if (i < vertexPositionBuffer.numberOfItems / 2) colors.push(...blue);
     else colors.push(...orange);
   }
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.DYNAMIC_DRAW);
   vertexColorBuffer.itemSize = 4;
-  vertexColorBuffer.numItems = vertexPositionBuffer.numberOfItems;   
+  vertexColorBuffer.numItems = vertexPositionBuffer.numberOfItems;
+}
+
+/**
+ * Populate buffers with data
+ */
+function setupBuffers() {
+  //Generate the vertex positions    
+  loadVertices();
+
+  //Generate the vertex colors
+  loadColors();
+}
+
+/**
+ * Sends projection/modelview matrices to shader
+ */
+function setMatrixUniforms() {
+  gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+  gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
+}
+
+/**
+ * Translates degrees to radians
+ * @param {Number} degrees Degree input to function
+ * @return {Number} The radians that correspond to the degree input
+ */
+function degToRad(degrees) {
+  return degrees * Math.PI / 180;
 }
 
 /**
  * Draw call that applies matrix transformations to model and draws model in frame
  */
-function draw() { 
+function draw() {
   gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
+  mat4.identity(mvMatrix);
+  // mat4.scale(mvMatrix, mvMatrix, vec3.fromValues(Math.sin(degToRad(rotAngle)), Math.sin(degToRad(rotAngle)), Math.sin(degToRad(rotAngle))));
+  mat4.translate(mvMatrix, mvMatrix, vec3.fromValues(Math.sin(degToRad(rotAngle)), 0, 0));
+  mat4.rotateZ(mvMatrix, mvMatrix, degToRad(rotAngle));
+  mat4.identity(pMatrix);
+
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
-  gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
-                         vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+  gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute,
+    vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer);
-  gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 
-                            vertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute)
-                          
+  gl.vertexAttribPointer(shaderProgram.vertexColorAttribute,
+    vertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
+
+  setMatrixUniforms();
+
   gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numberOfItems);
+}
+
+/**
+ * Calculate the deformatino for a given vertex on the circle
+ * @param {number} x coordinate of circel boundary point
+ * @param {number} y coordinate of circel boundary point
+ * @param {number} angle around the circle of the boundary point
+ * @returns {object} a deformation vector to be applied to the boundary point
+ */
+function deformSin(x, y, angle) {
+  var circPt = vec2.fromValues(x, y);
+  var dist = 0.2 * Math.sin((angle) + degToRad(rotAngle));
+  vec2.normalize(circPt, circPt);
+  vec2.scale(circPt, circPt, dist);
+  return circPt;
+}
+
+/**
+ * Animation to be called from tick. Updates globals and performs animation for each tick.
+ */
+function animate() {
+  rotAngle = (rotAngle + 1.0) % 360;
+  loadVertices();
+}
+
+/**
+ * Tick called for every animation frame.
+ */
+function tick() {
+  requestAnimFrame(tick);
+  draw();
+  animate();
 }
 
 /**
  * Startup function called from html code to start program.
  */
- function startup() {
+function startup() {
   canvas = document.getElementById("myGLCanvas");
   gl = createGLContext(canvas);
-  setupShaders(); 
+  setupShaders();
   setupBuffers();
   gl.clearColor(1.0, 1.0, 1.0, 1.0);
-  draw();  
+  // gl.enable(gl.DEPTH_TEST);
+  tick();
 }
-
