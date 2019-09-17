@@ -25,13 +25,16 @@ var mvMatrix = mat4.create();
 /** @global The Projection matrix */
 var pMatrix = mat4.create();
 
-/** @global The angle of rotation around the x axis */
-var rotAngle = 0;
+/** @global The angle of rotation */
+var theta = 0;
+
+/** @global Last time record for cumputing elapsed time */
+var lastTime = 0;
 
 /**
  * Creates a context for WebGL
  * @param {element} canvas WebGL canvas
- * @return {Object} WebGL context
+ * @return {object} WebGL context
  */
 function createGLContext(canvas) {
   var context = null;
@@ -114,7 +117,13 @@ function setupShaders() {
   shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
 }
 
+/**
+ * Load vertices to buffer
+ */
 function loadVertices() {
+  // Vertices to compose the U of I logo,
+  // draw a large blue I, then draw a small orange I,
+  // covering the blue I with the small orange I to get the blue border.
   var triangleVertices = [
     // Blue: top
     -0.55, 0.45, 0.0,
@@ -210,6 +219,9 @@ function loadVertices() {
   vertexPositionBuffer.numberOfItems = triangleVertices.length / vertexPositionBuffer.itemSize;
 }
 
+/**
+ * Load colors to buffer
+ */
 function loadColors() {
   vertexColorBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer);
@@ -220,6 +232,9 @@ function loadColors() {
     234 / 256, 76 / 256, 39 / 256, 1.0
   ];
   var colors = [];
+
+  // First half of the buffer filled blue color,
+  // the other half filled orange color.
   for (var i = 0; i < vertexPositionBuffer.numberOfItems; i++) {
     if (i < vertexPositionBuffer.numberOfItems / 2) colors.push(...blue);
     else colors.push(...orange);
@@ -250,8 +265,8 @@ function setMatrixUniforms() {
 
 /**
  * Translates degrees to radians
- * @param {Number} degrees Degree input to function
- * @return {Number} The radians that correspond to the degree input
+ * @param {number} degrees Degree input to function
+ * @return {number} The radians that correspond to the degree input
  */
 function degToRad(degrees) {
   return degrees * Math.PI / 180;
@@ -265,9 +280,9 @@ function draw() {
   gl.clear(gl.COLOR_BUFFER_BIT);
 
   mat4.identity(mvMatrix);
-  // mat4.scale(mvMatrix, mvMatrix, vec3.fromValues(Math.sin(degToRad(rotAngle)), Math.sin(degToRad(rotAngle)), Math.sin(degToRad(rotAngle))));
-  mat4.translate(mvMatrix, mvMatrix, vec3.fromValues(Math.sin(degToRad(rotAngle)), 0, 0));
-  mat4.rotateZ(mvMatrix, mvMatrix, degToRad(rotAngle));
+  mat4.scale(mvMatrix, mvMatrix, vec3.fromValues(Math.cos(degToRad(theta)), Math.cos(degToRad(theta)), 1));
+  mat4.translate(mvMatrix, mvMatrix, vec3.fromValues(Math.sin(degToRad(theta)), 0, 0));
+  // mat4.rotateZ(mvMatrix, mvMatrix, degToRad(theta));
   mat4.identity(pMatrix);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
@@ -294,7 +309,7 @@ function draw() {
  */
 function deformSin(x, y, angle) {
   var circPt = vec2.fromValues(x, y);
-  var dist = 0.2 * Math.sin((angle) + degToRad(rotAngle));
+  var dist = 0.2 * Math.sin((angle)+degToRad(defAngle));
   vec2.normalize(circPt, circPt);
   vec2.scale(circPt, circPt, dist);
   return circPt;
@@ -304,7 +319,12 @@ function deformSin(x, y, angle) {
  * Animation to be called from tick. Updates globals and performs animation for each tick.
  */
 function animate() {
-  rotAngle = (rotAngle + 1.0) % 360;
+  var timeNow = new Date().getTime();
+  if (lastTime != 0) {
+    var elapsedTime = timeNow - lastTime;
+    theta = (theta + 1.0) % 360;
+  }
+  lastTime = timeNow;
   loadVertices();
 }
 
@@ -312,8 +332,10 @@ function animate() {
  * Tick called for every animation frame.
  */
 function tick() {
+  type = document.getElementsByName("type");
   requestAnimFrame(tick);
-  draw();
+  if (type[0].checked) draw();
+  else if (type[1].checked) ;
   animate();
 }
 

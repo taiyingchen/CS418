@@ -19,10 +19,14 @@ void main(void) {
   gl_FragColor = vColor;
 }
 </script>
-<script src="./mp1_files/gl-matrix-min.js"></script>
-<script type="text/javascript" src="./mp1_files/webgl-utils.js"></script>
-<script src="./mp1_files/mp1.js"></script></head>
+<script src="gl-matrix-min.js"></script>
+<script type="text/javascript" src="webgl-utils.js"></script>
+<script src="mp1.js"></script></head>
 
 <body onload="startup();" data-gr-c-s-loaded="true">
   <canvas id="myGLCanvas" width="500" height="500"></canvas>
+  <div>
+    <input type="radio" name="type" value="1" checked> Logo Animation <br>
+    <input type="radio" name="type" value="2"> My Animation 
+  </div>
 </body></html>
