@@ -25,11 +25,15 @@ var mvMatrix = mat4.create();
 /** @global The Projection matrix */
 var pMatrix = mat4.create();
 
+/** @global Animation rate */
+var rate = 0.2;
+
 /** @global The angle of rotation */
 var theta = 0;
 
 /** @global Last time record for cumputing elapsed time */
 var lastTime = 0;
+
 
 /**
  * Creates a context for WebGL
@@ -115,6 +119,17 @@ function setupShaders() {
   gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
   shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
   shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+}
+
+/**
+ * Linear Interpolation for intermediate frames
+ * @param {number} start The value of start position
+ * @param {number} end The value of end position
+ * @param {number} t Time between 0 and 1
+ * @returns {number} Linear intermediate position
+ */
+function lerp(start, end, time) {
+  return start + time * (end - start);
 }
 
 /**
@@ -211,6 +226,100 @@ function loadVertices() {
     0.5, -0.5, 0.0,
   ];
 
+  var triangleVerticesLong = [
+    // Blue: top
+    -1.0, 0.45, 0.0,
+    -1.0, 0.85, 0.0,
+    -0.35, 0.45, 0.0,
+    -1.0, 0.85, 0.0,
+    -0.35, 0.45, 0.0,
+    0, 0.85, 0.0,
+    -0.35, 0.45, 0.0,
+    0, 0.85, 0.0,
+    0.35, 0.45, 0.0,
+    0, 0.85, 0.0,
+    0.35, 0.45, 0.0,
+    1.0, 0.85, 0.0,
+    0.35, 0.45, 0.0,
+    1.0, 0.85, 0.0,
+    1.0, 0.45, 0.0,
+    // Body
+    -0.35, 0.45, 0.0,
+    0.35, 0.45, 0.0,
+    -0.35, 0.0, 0.0,
+    0.35, 0.45, 0.0,
+    -0.35, 0.0, 0.0,
+    0.35, -0.45, 0.0,
+    -0.35, 0.0, 0.0,
+    0.35, -0.45, 0.0,
+    -0.35, -0.45, 0.0,
+    // Bottom
+    -1.0, -0.45, 0.0,
+    -1.0, -0.85, 0.0,
+    -0.35, -0.45, 0.0,
+    -1.0, -0.85, 0.0,
+    -0.35, -0.45, 0.0,
+    0, -0.85, 0.0,
+    -0.35, -0.45, 0.0,
+    0, -0.85, 0.0,
+    0.35, -0.45, 0.0,
+    0, -0.85, 0.0,
+    0.35, -0.45, 0.0,
+    1.0, -0.85, 0.0,
+    0.35, -0.45, 0.0,
+    1.0, -0.85, 0.0,
+    1.0, -0.45, 0.0,
+    // Orange: top
+    -0.95, 0.5, 0.0,
+    -0.95, 0.8, 0.0,
+    -0.3, 0.5, 0.0,
+    -0.95, 0.8, 0.0,
+    -0.3, 0.5, 0.0,
+    0, 0.8, 0.0,
+    -0.3, 0.5, 0.0,
+    0, 0.8, 0.0,
+    0.3, 0.5, 0.0,
+    0, 0.8, 0.0,
+    0.3, 0.5, 0.0,
+    0.95, 0.8, 0.0,
+    0.3, 0.5, 0.0,
+    0.95, 0.8, 0.0,
+    0.95, 0.5, 0.0,
+    // Body
+    -0.3, 0.5, 0.0,
+    0.3, 0.5, 0.0,
+    -0.3, 0.0, 0.0,
+    0.3, 0.5, 0.0,
+    -0.3, 0.0, 0.0,
+    0.3, -0.5, 0.0,
+    -0.3, 0.0, 0.0,
+    0.3, -0.5, 0.0,
+    -0.3, -0.5, 0.0,
+    // Bottom
+    -0.95, -0.5, 0.0,
+    -0.95, -0.8, 0.0,
+    -0.3, -0.5, 0.0,
+    -0.95, -0.8, 0.0,
+    -0.3, -0.5, 0.0,
+    0, -0.8, 0.0,
+    -0.3, -0.5, 0.0,
+    0, -0.8, 0.0,
+    0.3, -0.5, 0.0,
+    0, -0.8, 0.0,
+    0.3, -0.5, 0.0,
+    0.95, -0.8, 0.0,
+    0.3, -0.5, 0.0,
+    0.95, -0.8, 0.0,
+    0.95, -0.5, 0.0,
+  ];
+
+  // Let time between 0 and 1,
+  // Linear interpolation between normal and long logo
+  var time = Math.abs(Math.cos(degToRad(theta*rate)));
+  for (var i = 0; i < triangleVertices.length; i++) {
+    triangleVertices[i] = lerp(triangleVerticesLong[i], triangleVertices[i], time);
+  }
+
   vertexPositionBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
 
@@ -280,9 +389,8 @@ function draw() {
   gl.clear(gl.COLOR_BUFFER_BIT);
 
   mat4.identity(mvMatrix);
-  mat4.scale(mvMatrix, mvMatrix, vec3.fromValues(Math.cos(degToRad(theta)), Math.cos(degToRad(theta)), 1));
-  mat4.translate(mvMatrix, mvMatrix, vec3.fromValues(Math.sin(degToRad(theta)), 0, 0));
-  // mat4.rotateZ(mvMatrix, mvMatrix, degToRad(theta));
+  mat4.scale(mvMatrix, mvMatrix, vec3.fromValues(Math.cos(degToRad(theta*rate)), Math.cos(degToRad(theta*rate)), 1));
+  mat4.translate(mvMatrix, mvMatrix, vec3.fromValues(Math.sin(degToRad(theta*rate)), 0, 0));
   mat4.identity(pMatrix);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
@@ -301,28 +409,13 @@ function draw() {
 }
 
 /**
- * Calculate the deformatino for a given vertex on the circle
- * @param {number} x coordinate of circel boundary point
- * @param {number} y coordinate of circel boundary point
- * @param {number} angle around the circle of the boundary point
- * @returns {object} a deformation vector to be applied to the boundary point
- */
-function deformSin(x, y, angle) {
-  var circPt = vec2.fromValues(x, y);
-  var dist = 0.2 * Math.sin((angle)+degToRad(defAngle));
-  vec2.normalize(circPt, circPt);
-  vec2.scale(circPt, circPt, dist);
-  return circPt;
-}
-
-/**
  * Animation to be called from tick. Updates globals and performs animation for each tick.
  */
 function animate() {
   var timeNow = new Date().getTime();
   if (lastTime != 0) {
     var elapsedTime = timeNow - lastTime;
-    theta = (theta + 1.0) % 360;
+    theta += 1.0;
   }
   lastTime = timeNow;
   loadVertices();
