@@ -249,6 +249,9 @@ function setupShaders() {
   shaderProgram.uniformAmbientMaterialColorLoc = gl.getUniformLocation(shaderProgram, "uKAmbient");  
   shaderProgram.uniformDiffuseMaterialColorLoc = gl.getUniformLocation(shaderProgram, "uKDiffuse");
   shaderProgram.uniformSpecularMaterialColorLoc = gl.getUniformLocation(shaderProgram, "uKSpecular");
+
+  shaderProgram.uniformMinHeight = gl.getUniformLocation(shaderProgram, "uMinHeight");
+  shaderProgram.uniformMaxHeight = gl.getUniformLocation(shaderProgram, "uMaxHeight");
 }
 
 //-------------------------------------------------------------------------
@@ -264,6 +267,11 @@ function setMaterialUniforms(alpha,a,d,s) {
   gl.uniform3fv(shaderProgram.uniformAmbientMaterialColorLoc, a);
   gl.uniform3fv(shaderProgram.uniformDiffuseMaterialColorLoc, d);
   gl.uniform3fv(shaderProgram.uniformSpecularMaterialColorLoc, s);
+
+  var min, max;
+  [min, max] = myTerrain.getMinMaxHeight();
+  gl.uniform1f(shaderProgram.uniformMinHeight, min);
+  gl.uniform1f(shaderProgram.uniformMaxHeight, max);
 }
 
 //-------------------------------------------------------------------------
@@ -286,7 +294,7 @@ function setLightUniforms(loc,a,d,s) {
  * Populate buffers with data
  */
 function setupBuffers() {
-    myTerrain = new Terrain(10,-0.5,0.5,-0.5,0.5);
+    myTerrain = new Terrain(64,-0.5,0.5,-0.5,0.5);
     myTerrain.loadBuffers();
 }
 

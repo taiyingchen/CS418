@@ -357,4 +357,20 @@ class Terrain{
         v[2] = this.vBuffer[3*index+2]; // z coordinate
         return v;
     }
+
+    getMinMaxHeight()
+    {
+        var min = Infinity;
+        var max = -Infinity;
+        for (var i = 0; i < this.numVertices; i++) {
+            var height = this.vBuffer[3*i+2]; // z coordinate
+            if (height < min) {
+                min = height;
+            }
+            if (height > max) {
+                max = height;
+            }
+        }
+        return [min, max];
+    }
 }

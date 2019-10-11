@@ -17,12 +17,28 @@
     varying vec3 vNormal;
     varying vec3 vPosition;
 
+    uniform float uMinHeight;
+    uniform float uMaxHeight;
+
+    varying vec3 vKDiffuse;
+
     void main(void) {
         // Get the vertex position in eye coordinates
         gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
         vPosition = (uMVMatrix * vec4(aVertexPosition, 1.0)).xyz;
         // Calculate the normal
         vNormal = uNMatrix * aVertexNormal;
+
+        float height = (aVertexPosition.z - uMinHeight) / (uMaxHeight - uMinHeight);
+        if (height < 0.25) {
+            vKDiffuse = vec3(0.0/255.0, 0.0/255.0, 255.0/255.0);
+        } else if (height < 0.50) {
+            vKDiffuse = vec3(0.0/255.0, 128.0/255.0, 0.0/255.0);
+        } else if (height < 0.75) {
+            vKDiffuse = vec3(165.0/255.0, 42.0/255.0, 42.0/255.0);
+        } else {
+            vKDiffuse = vec3(255.0/255.0, 255.0/255.0, 255.0/255.0);
+        }
     }
 </script>
   
@@ -41,6 +57,8 @@
 
     varying vec3 vNormal;
     varying vec3 vPosition;
+
+    varying vec3 vKDiffuse;
 
     void main(void) {
         // Calculate the vector (l) to the light source
@@ -68,7 +86,7 @@
 
         // Sum up all three reflection components and send to the fragment shader
         gl_FragColor = vec4(((uAmbientLightColor*uKAmbient)
-                    + (uDiffuseLightColor*uKDiffuse) * diffuseLightWeightning
+                    + (uDiffuseLightColor*vKDiffuse) * diffuseLightWeightning
                     + ((uSpecularLightColor*uKSpecular) * specularLightWeightning)),1.0);
     }
 </script>
