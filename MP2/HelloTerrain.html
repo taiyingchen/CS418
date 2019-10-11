@@ -52,10 +52,6 @@
         // Calculate n dot l for diffuse lighting
         float diffuseLightWeightning = max(dot(normalEye, 
                                         vectorToLightSource), 0.0);
-                                        
-        // Calculate the reflection vector (r) that is needed for specular light
-        vec3 reflectionVector = normalize(reflect(-vectorToLightSource, 
-                                                normalEye));
         
         // The camera in eye coordinates is located in the origin and is pointing
         // along the negative z-axis. Calculate viewVector (v) 
@@ -63,9 +59,12 @@
         // (0.0, 0.0, 0.0) - vPosition
         vec3 viewVectorEye = -normalize(vPosition);
         
-        float rdotv = max(dot(reflectionVector, viewVectorEye), 0.0);
+        // Blinn-Phong reflection model
+        vec3 halfwayVector = normalize(vectorToLightSource + viewVectorEye);
+
+        float ndoth = max(dot(halfwayVector, normalEye), 0.0);
         
-        float specularLightWeightning = pow(rdotv, uShininess);
+        float specularLightWeightning = pow(ndoth, uShininess);
 
         // Sum up all three reflection components and send to the fragment shader
         gl_FragColor = vec4(((uAmbientLightColor*uKAmbient)
