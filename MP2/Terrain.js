@@ -314,6 +314,11 @@ class Terrain{
         this.normalizeNormals();
     }
 
+    /**
+     * Accumulate the nomal vector to the vertices which compose the triangle
+     * @param {number[]} vertexIndices index of the vertex in vBuffer (also nBuffer)
+     * @param {number[]} normal a normal vector of length 3
+     */
     accumNormals(vertexIndices, normal) {
         for (var i = 0; i < vertexIndices.length; i++) {
             this.nBuffer[3*vertexIndices[i]] += normal[0];
@@ -336,11 +341,19 @@ class Terrain{
         }
     }
 
+    /**
+     * Get the indices of vertices which compose the triangle
+     * @param {number} f index of the triangle in fBuffer
+     */
     getTriangleVertexIndices(f)
     {
         return [this.fBuffer[3*f], this.fBuffer[3*f+1], this.fBuffer[3*f+2]];
     }
 
+    /**
+     * Get the coordinates of vertices which compose the triangle
+     * @param {number[]} indices index the vertex in vBuffer
+     */
     getTriangleVertices(indices)
     {
         var v1 = this.getVertexByIndex(indices[0]);
@@ -349,6 +362,10 @@ class Terrain{
         return [v1, v2, v3];
     }
 
+    /**
+     * Get the coordinates of vertex by index in vBuffer
+     * @param {number} index index of the vertex in vBuffer
+     */
     getVertexByIndex(index)
     {
         var v = vec3.create();
@@ -358,6 +375,9 @@ class Terrain{
         return v;
     }
 
+    /**
+     * Get minimum and maximum height among all vertices
+     */
     getMinMaxHeight()
     {
         var min = Infinity;

@@ -29,15 +29,16 @@
         // Calculate the normal
         vNormal = uNMatrix * aVertexNormal;
 
+        // Normalize height to value between 0 to 1
         float height = (aVertexPosition.z - uMinHeight) / (uMaxHeight - uMinHeight);
         if (height < 0.25) {
-            vKDiffuse = vec3(0.0/255.0, 0.0/255.0, 255.0/255.0);
+            vKDiffuse = vec3(0.0/255.0, 0.0/255.0, 255.0/255.0); // blue
         } else if (height < 0.50) {
-            vKDiffuse = vec3(0.0/255.0, 128.0/255.0, 0.0/255.0);
+            vKDiffuse = vec3(0.0/255.0, 128.0/255.0, 0.0/255.0); // green
         } else if (height < 0.75) {
-            vKDiffuse = vec3(165.0/255.0, 42.0/255.0, 42.0/255.0);
+            vKDiffuse = vec3(165.0/255.0, 42.0/255.0, 42.0/255.0); // brown
         } else {
-            vKDiffuse = vec3(255.0/255.0, 255.0/255.0, 255.0/255.0);
+            vKDiffuse = vec3(255.0/255.0, 255.0/255.0, 255.0/255.0); // white
         }
     }
 </script>
