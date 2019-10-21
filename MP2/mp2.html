@@ -62,6 +62,14 @@
     varying vec3 vKDiffuse;
 
     void main(void) {
+        float fogCoord = (gl_FragCoord.z/gl_FragCoord.w);
+        vec4 fogColor = vec4(1.0, 1.0, 1.0, 1.0);
+
+        const float LOG2 = 1.442695;
+        float fogDensity = 0.45;
+        float fogFactor = exp2(-fogDensity * fogDensity * fogCoord * fogCoord * LOG2);
+        fogFactor = clamp(fogFactor, 0.0, 1.0);
+
         // Calculate the vector (l) to the light source
         vec3 vectorToLightSource = normalize(uLightPosition - vPosition);
         
@@ -86,9 +94,11 @@
         float specularLightWeightning = pow(ndoth, uShininess);
 
         // Sum up all three reflection components and send to the fragment shader
-        gl_FragColor = vec4(((uAmbientLightColor*uKAmbient)
+        vec4 fragColor = vec4(((uAmbientLightColor*uKAmbient)
                     + (uDiffuseLightColor*vKDiffuse) * diffuseLightWeightning
                     + ((uSpecularLightColor*uKSpecular) * specularLightWeightning)),1.0);
+
+        gl_FragColor = mix(fogColor, fragColor, fogFactor);
     }
 </script>
 
