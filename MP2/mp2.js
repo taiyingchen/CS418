@@ -252,6 +252,8 @@ function setupShaders() {
 
   shaderProgram.uniformMinHeight = gl.getUniformLocation(shaderProgram, "uMinHeight");
   shaderProgram.uniformMaxHeight = gl.getUniformLocation(shaderProgram, "uMaxHeight");
+
+  shaderProgram.uniformFogLoc = gl.getUniformLocation(shaderProgram, "uFog");
 }
 
 //-------------------------------------------------------------------------
@@ -272,6 +274,12 @@ function setMaterialUniforms(alpha,a,d,s) {
   [min, max] = myTerrain.getMinMaxHeight();
   gl.uniform1f(shaderProgram.uniformMinHeight, min);
   gl.uniform1f(shaderProgram.uniformMaxHeight, max);
+
+  if (document.getElementById("fog").checked) {
+    gl.uniform1i(shaderProgram.uniformFogLoc, true);
+  } else {
+    gl.uniform1i(shaderProgram.uniformFogLoc, false);
+  }
 }
 
 //-------------------------------------------------------------------------
