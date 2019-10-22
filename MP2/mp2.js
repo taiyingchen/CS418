@@ -72,7 +72,11 @@ var kEdgeBlack = [0.0,0.0,0.0];
 /** @global Edge color for wireframe rendering */
 var kEdgeWhite = [1.0,1.0,1.0];
 
-
+//Quaternions parameters
+var quaternion = quat.create();
+var rollDegree = 0;
+var pitchDegree = 0;
+var speed = 0.001;
 
 //-------------------------------------------------------------------------
 /**
@@ -321,8 +325,43 @@ function draw() {
     mat4.perspective(pMatrix,degToRad(45), 
                      gl.viewportWidth / gl.viewportHeight,
                      0.1, 200.0);
+    
+    if (currentlyPressedKeys["ArrowLeft"]) {
+      rollDegree -= 1;
+      quat.setAxisAngle(quaternion, viewDir, degToRad(-1));
+      vec3.transformQuat(viewDir, viewDir, quaternion);
+      vec3.transformQuat(up, up, quaternion);
+    } else if (currentlyPressedKeys["ArrowRight"]) {
+      rollDegree += 1;
+      quat.setAxisAngle(quaternion, viewDir, degToRad(1));
+      vec3.transformQuat(viewDir, viewDir, quaternion);
+      vec3.transformQuat(up, up, quaternion);
+    }
 
-    // We want to look down -z, so create a lookat point in that direction    
+    var cross = vec3.create();
+    if (currentlyPressedKeys["ArrowUp"]){
+      pitchDegree += 1;
+      vec3.cross(cross, viewDir, up);
+      quat.setAxisAngle(quaternion, cross, degToRad(1));
+      vec3.transformQuat(viewDir, viewDir, quaternion);
+      vec3.transformQuat(up, up, quaternion);
+    } else if (currentlyPressedKeys["ArrowDown"]){
+      pitchDegree -= 1;
+      vec3.cross(cross, viewDir, up);
+      quat.setAxisAngle(quaternion, cross, degToRad(-1));
+      vec3.transformQuat(viewDir, viewDir, quaternion);
+      vec3.transformQuat(up, up, quaternion);
+    }
+
+    document.getElementById("roll").value = rollDegree;
+    document.getElementById("pitch").value = pitchDegree;
+    document.getElementById("speed").value = speed;
+    
+    movement = vec3.create();
+    vec3.scale(movement, viewDir, speed);
+    vec3.add(eyePt, eyePt, movement);
+    
+    // We want to look down -z, so create a lookat point in that direction  
     vec3.add(viewPt, eyePt, viewDir);
     // Then generate the lookat matrix and initialize the MV matrix to that view
     mat4.lookAt(mvMatrix,eyePt,viewPt,up);    
@@ -359,6 +398,38 @@ function draw() {
 }
 
 //----------------------------------------------------------------------------------
+//Code to handle user interaction
+var currentlyPressedKeys = {};
+
+function handleKeyDown(event) {
+  // console.log("Key down ", event.key, " code ", event.code);
+  if (event.key == "ArrowLeft" || event.key == "ArrowRight" || event.key == "ArrowUp" || event.key == "ArrowDown") {
+    event.preventDefault();
+  }
+  currentlyPressedKeys[event.key] = true;
+
+  if (event.key == "=") {
+    speed += 0.001;
+  } else if (event.key == "-") {
+    speed -= 0.001;
+  }
+}
+
+function handleKeyUp(event) {
+  //console.log("Key up ", event.key, " code ", event.code);
+  currentlyPressedKeys[event.key] = false;
+}
+
+/**
+ * Translates degrees to radians
+ * @param {number} degrees Degree input to function
+ * @return {number} The radians that correspond to the degree input
+ */
+function degToRad(degrees) {
+  return degrees * Math.PI / 180;
+}
+
+//----------------------------------------------------------------------------------
 /**
  * Startup function called from html code to start program.
  */
@@ -367,8 +438,10 @@ function draw() {
   gl = createGLContext(canvas);
   setupShaders();
   setupBuffers();
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clearColor(1.0, 1.0, 1.0, 1.0);
   gl.enable(gl.DEPTH_TEST);
+  document.onkeydown = handleKeyDown;
+  document.onkeyup = handleKeyUp;
   tick();
 }
 
