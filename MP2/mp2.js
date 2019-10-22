@@ -326,6 +326,7 @@ function draw() {
                      gl.viewportWidth / gl.viewportHeight,
                      0.1, 200.0);
     
+    // Roll orientation
     if (currentlyPressedKeys["ArrowLeft"]) {
       rollDegree -= 1;
       quat.setAxisAngle(quaternion, viewDir, degToRad(-1));
@@ -338,6 +339,7 @@ function draw() {
       vec3.transformQuat(up, up, quaternion);
     }
 
+    // Pitch orientation
     var cross = vec3.create();
     if (currentlyPressedKeys["ArrowUp"]){
       pitchDegree += 1;
@@ -353,10 +355,12 @@ function draw() {
       vec3.transformQuat(up, up, quaternion);
     }
 
+    // Update value in the wepage
     document.getElementById("roll").value = rollDegree;
     document.getElementById("pitch").value = pitchDegree;
     document.getElementById("speed").value = speed;
     
+    // Update the eye point by adding movement to it
     movement = vec3.create();
     vec3.scale(movement, viewDir, speed);
     vec3.add(eyePt, eyePt, movement);
@@ -408,6 +412,7 @@ function handleKeyDown(event) {
   }
   currentlyPressedKeys[event.key] = true;
 
+  // Update the speed if key is pressing
   if (event.key == "=") {
     speed += 0.001;
   } else if (event.key == "-") {
