@@ -25,6 +25,7 @@
     uniform float uShininess;
     
     varying vec4 vColor;
+    varying vec3 vDirection;
 
     void main(void) {
     
@@ -64,21 +65,25 @@
                 
     gl_Position = uPMatrix*uMVMatrix*vec4(aVertexPosition, 1.0);
     //vColor=vec4(normalEye,1);
+
+    vDirection = reflect(-viewVectorEye, normalEye);
     }
 </script>
   
 <script id="shader-fs" type="x-shader/x-fragment">
 precision mediump float;
+uniform samplerCube uTexture;
 varying vec4 vColor;
+varying vec3 vDirection;
 void main(void) {
-        gl_FragColor = vColor;
- }
+  gl_FragColor = textureCube(uTexture, vDirection);
+}
 </script>
 
 <script src="gl-matrix-min.js"></script> 
 <script src="webgl-utils.js"></script> 
 <script src="TriMesh.js"></script>  
-<script src="mp3.js"></script>   
+<script src="mp3.js"></script>
 <body onload="startup();">
  <canvas id="myGLCanvas" width="800" height="800"></canvas>
     <form id="input_form">

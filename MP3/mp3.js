@@ -13,6 +13,9 @@ var canvas;
 /** @global A simple GLSL shader program */
 var shaderProgram;
 
+/** @global A simple GLSL skybox shader program */
+var skyboxShaderProgram;
+
 /** @global The Modelview matrix */
 var mvMatrix = mat4.create();
 
@@ -261,6 +264,9 @@ function setupShaders() {
   shaderProgram.uniformAmbientMaterialColorLoc = gl.getUniformLocation(shaderProgram, "uKAmbient");  
   shaderProgram.uniformDiffuseMaterialColorLoc = gl.getUniformLocation(shaderProgram, "uKDiffuse");
   shaderProgram.uniformSpecularMaterialColorLoc = gl.getUniformLocation(shaderProgram, "uKSpecular");
+  shaderProgram.uniformTextureLoc = gl.getUniformLocation(shaderProgram, "uTexture");
+
+  setTexture();
 }
 
 //-------------------------------------------------------------------------
@@ -272,6 +278,8 @@ function setupShaders() {
  * @param {Float32Array} s Specular material color
  */
 function setMaterialUniforms(alpha,a,d,s) {
+  // Tell the shader to use texture unit 0 for uTexture
+  gl.uniform1i(shaderProgram.uniformTextureLoc, 0.5);
   gl.uniform1f(shaderProgram.uniformShininessLoc, alpha);
   gl.uniform3fv(shaderProgram.uniformAmbientMaterialColorLoc, a);
   gl.uniform3fv(shaderProgram.uniformDiffuseMaterialColorLoc, d);
@@ -375,20 +383,20 @@ function handleKeyDown(event) {
         currentlyPressedKeys[event.key] = true;
           if (currentlyPressedKeys["a"]) {
             // key A
-            eulerY-= 1;
+            eulerY-= 10;
         } else if (currentlyPressedKeys["d"]) {
             // key D
-            eulerY+= 1;
+            eulerY+= 10;
         } 
     
         if (currentlyPressedKeys["ArrowUp"]){
             // Up cursor key
             event.preventDefault();
-            eyePt[2]+= 0.01;
+            eyePt[2]+= 1;
         } else if (currentlyPressedKeys["ArrowDown"]){
             event.preventDefault();
             // Down cursor key
-            eyePt[2]-= 0.01;
+            eyePt[2]-= 1;
         } 
     
 }
@@ -437,3 +445,63 @@ function tick() {
     draw();
 }
 
+
+
+function setTexture() {
+  // Create a texture.
+  var texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+
+  const faceInfos = [
+  {
+      target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+      url: 'London/pos-x.png',
+  },
+  {
+      target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+      url: 'London/neg-x.png',
+  },
+  {
+      target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+      url: 'London/pos-y.png',
+  },
+  {
+      target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+      url: 'London/neg-y.png',
+  },
+  {
+      target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+      url: 'London/pos-z.png',
+  },
+  {
+      target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+      url: 'London/neg-z.png',
+  },
+  ];
+  faceInfos.forEach((faceInfo) => {
+      const {target, url} = faceInfo;
+
+      // Upload the canvas to the cubemap face.
+      const level = 0;
+      const internalFormat = gl.RGBA;
+      const width = 512;
+      const height = 512;
+      const format = gl.RGBA;
+      const type = gl.UNSIGNED_BYTE;
+
+      // setup each face so it's immediately renderable
+      gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, null);
+
+      // Asynchronously load an image
+      const image = new Image();
+      image.src = url;
+      image.addEventListener('load', function() {
+          // Now that the image has loaded make copy it to the texture.
+          gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+          gl.texImage2D(target, level, internalFormat, format, type, image);
+          gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+      });
+  });
+  gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+  gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+}
