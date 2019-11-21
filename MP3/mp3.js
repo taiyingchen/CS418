@@ -83,6 +83,8 @@ var kEdgeWhite = [1.0,1.0,1.0];
 
 //Model parameters
 var eulerY=0;
+var textureType;
+var phong;
 
 //-------------------------------------------------------------------------
 /**
@@ -179,6 +181,8 @@ function mPopMatrix() {
  */
 function setMatrixUniforms() {
     gl.useProgram(shaderProgram);
+    gl.uniform1i(shaderProgram.uniformTextureTypeLoc, textureType);
+    gl.uniform1i(shaderProgram.uniformPhongLoc, phong);
     uploadModelViewMatrixToShader();
     uploadNormalMatrixToShader();
     uploadProjectionMatrixToShader();
@@ -314,6 +318,8 @@ function setupShaders() {
   shaderProgram.uniformSpecularMaterialColorLoc = gl.getUniformLocation(shaderProgram, "uKSpecular");
   shaderProgram.uniformTextureLoc = gl.getUniformLocation(shaderProgram, "uTexture");
   shaderProgram.uniformEyeLoc = gl.getUniformLocation(shaderProgram, "uEye");
+  shaderProgram.uniformTextureTypeLoc = gl.getUniformLocation(shaderProgram, "uTextureType");
+  shaderProgram.uniformPhongLoc = gl.getUniformLocation(shaderProgram, "uPhong");
 }
 
 function setupSkyboxShaders() {
@@ -524,9 +530,19 @@ function handleKeyUp(event) {
   * Update any model transformations
   */
 function animate() {
-   //console.log(eulerX, " ", eulerY, " ", eulerZ); 
-   document.getElementById("eY").value=eulerY;
-   document.getElementById("eZ").value=eyePt[2];   
+  document.getElementById("eY").value=eulerY;
+  document.getElementById("eZ").value=eyePt[2];
+  if ((document.getElementById("phong").checked)) {
+    textureType = 0;
+    phong = true;
+  } else {
+    if ((document.getElementById("reflective").checked)) {
+      textureType = 1;
+    } else if ((document.getElementById("refractive").checked)) {
+      textureType = 2;
+    }
+    phong = false;
+  }
 }
 
 

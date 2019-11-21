@@ -27,6 +27,7 @@
     uniform float uShininess;
 
     uniform vec3 uEye;
+    uniform int uTextureType;
     
     varying vec4 vColor;
     varying vec3 vDirection;
@@ -73,18 +74,27 @@
     vec3 positionWorld = (uMMatrix * vec4(aVertexPosition, 1.0)).xyz;
     vec3 normalWorld = normalize(mat3(uMMatrix) * aVertexNormal);
     vec3 eyeToVertex = normalize(positionWorld - uEye);
-    vDirection = reflect(eyeToVertex, normalWorld);
+    if (uTextureType == 0 || uTextureType == 1) {
+      vDirection = reflect(eyeToVertex, normalWorld);
+    } else if (uTextureType == 2) {
+      vDirection = refract(eyeToVertex, normalWorld,  1.00/1.52);
+    }
     }
 </script>
   
 <script id="shader-fs" type="x-shader/x-fragment">
 precision mediump float;
 uniform samplerCube uTexture;
+uniform bool uPhong;
 varying vec4 vColor;
 varying vec3 vDirection;
+
 void main(void) {
-  gl_FragColor = textureCube(uTexture, vDirection);
-  // gl_FragColor = vColor;
+  if (uPhong) {
+    gl_FragColor = vColor;
+  } else {
+    gl_FragColor = textureCube(uTexture, vDirection);
+  }
 }
 </script>
 
@@ -128,6 +138,12 @@ void main(void) {
          <input type="radio" name="primitive" id="polygon" id="polygon" value="polygon" checked> Polygon
          <input type="radio" name="primitive" id="wirepoly" value="wirepoly" > Polygon with Edges  
         </fieldset>
+        <fieldset>
+          <legend>Teapot Texture</legend>
+       <input type="radio" name="texture" id="phong" value="phong"> Phong Shading
+       <input type="radio" name="texture" id="reflective" value="reflective" checked> Reflective
+       <input type="radio" name="texture" id="refractive" value="refractive"> Refractive
+      </fieldset>
         <fieldset>
             <legend>Mesh Pose and Camera Position</legend>
          <emph>Euler Y:</emph> <input type="number" id="eY" value="0"> Keys A and D <br><br>
