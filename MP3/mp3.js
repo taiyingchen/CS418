@@ -389,16 +389,23 @@ function handleKeyDown(event) {
             eulerY+= 10;
         } 
     
+        if (currentlyPressedKeys["ArrowLeft"]){
+            // Left cursor key
+            vec3.rotateY(eyePt, eyePt, viewPt, -degToRad(thetaRate));
+        } else if (currentlyPressedKeys["ArrowRight"]){
+            // Rights cursor key
+            vec3.rotateY(eyePt, eyePt, viewPt, degToRad(thetaRate));
+        } 
+
         if (currentlyPressedKeys["ArrowUp"]){
             // Up cursor key
             event.preventDefault();
-            eyePt[2]+= 1;
+            vec3.rotateX(eyePt, eyePt, viewPt, degToRad(thetaRate));
         } else if (currentlyPressedKeys["ArrowDown"]){
-            event.preventDefault();
             // Down cursor key
-            eyePt[2]-= 1;
-        } 
-    
+            event.preventDefault();
+            vec3.rotateX(eyePt, eyePt, viewPt, -degToRad(thetaRate));
+        }
 }
 
 function handleKeyUp(event) {
