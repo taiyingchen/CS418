@@ -22,6 +22,9 @@ var mvMatrix = mat4.create();
 /** @global The View matrix */
 var vMatrix = mat4.create();
 
+/** @global The Model matrix */
+var mMatrix = mat4.create();
+
 /** @global The Projection matrix */
 var pMatrix = mat4.create();
 
@@ -31,19 +34,24 @@ var nMatrix = mat3.create();
 /** @global The matrix stack for hierarchical modeling */
 var mvMatrixStack = [];
 
+/** @global The matrix stack for hierarchical modeling */
+var mMatrixStack = [];
+
 /** @global An object holding the geometry for a 3D mesh */
 var myMesh;
 
 
 // View parameters
 /** @global Location of the camera in world coordinates */
-var eyePt = vec3.fromValues(0.0,1.5,15.0);
+var eyePt = vec3.fromValues(0.0,1.0,10.0);
 /** @global Direction of the view in world coordinates */
 var viewDir = vec3.fromValues(0.0,0.0,-1.0);
 /** @global Up vector for view matrix creation, in world coordinates */
 var up = vec3.fromValues(0.0,1.0,0.0);
 /** @global Location of a point along viewDir in world coordinates */
-var viewPt = vec3.fromValues(0.0,0.0,0.0);
+var viewPt = vec3.fromValues(0.0,1.0,0.0);
+/** @global Rotation rate */
+var thetaRate = 5;
 
 //Light parameters
 /** @global Light position in VIEW coordinates */
@@ -95,6 +103,9 @@ function asyncGetFile(url) {
  */
 function uploadModelViewMatrixToShader() {
   gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+  gl.uniformMatrix4fv(shaderProgram.vMatrixUniform, false, vMatrix);
+  gl.uniformMatrix4fv(shaderProgram.mMatrixUniform, false, mMatrix);
+  gl.uniform3fv(shaderProgram.uniformEyeLoc, eyePt);
 }
 
 //-------------------------------------------------------------------------
@@ -136,6 +147,27 @@ function mvPopMatrix() {
       throw "Invalid popMatrix!";
     }
     mvMatrix = mvMatrixStack.pop();
+}
+
+//----------------------------------------------------------------------------------
+/**
+ * Pushes matrix onto modelmatrix stack
+ */
+function mPushMatrix() {
+  var copy = mat4.clone(mMatrix);
+  mMatrixStack.push(copy);
+}
+
+
+//----------------------------------------------------------------------------------
+/**
+* Pops matrix off of model matrix stack
+*/
+function mPopMatrix() {
+  if (mMatrixStack.length == 0) {
+    throw "Invalid popMatrix!";
+  }
+  mMatrix = mMatrixStack.pop();
 }
 
 //----------------------------------------------------------------------------------
@@ -254,6 +286,8 @@ function setupShaders() {
   gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
 
   shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+  shaderProgram.vMatrixUniform = gl.getUniformLocation(shaderProgram, "uVMatrix");
+  shaderProgram.mMatrixUniform = gl.getUniformLocation(shaderProgram, "uMMatrix");
   shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
   shaderProgram.nMatrixUniform = gl.getUniformLocation(shaderProgram, "uNMatrix");
   shaderProgram.uniformLightPositionLoc = gl.getUniformLocation(shaderProgram, "uLightPosition");    
@@ -265,6 +299,7 @@ function setupShaders() {
   shaderProgram.uniformDiffuseMaterialColorLoc = gl.getUniformLocation(shaderProgram, "uKDiffuse");
   shaderProgram.uniformSpecularMaterialColorLoc = gl.getUniformLocation(shaderProgram, "uKSpecular");
   shaderProgram.uniformTextureLoc = gl.getUniformLocation(shaderProgram, "uTexture");
+  shaderProgram.uniformEyeLoc = gl.getUniformLocation(shaderProgram, "uEye");
 
   setTexture();
 }
@@ -335,7 +370,7 @@ function draw() {
                      0.1, 500.0);
 
     // We want to look down -z, so create a lookat point in that direction    
-    vec3.add(viewPt, eyePt, viewDir);
+    // vec3.add(viewPt, eyePt, viewDir);
     
     // Then generate the lookat matrix and initialize the view matrix to that view
     mat4.lookAt(vMatrix,eyePt,viewPt,up);
@@ -344,6 +379,8 @@ function draw() {
     //ADD an if statement to prevent early drawing of myMesh
     if (myMesh.loaded()) {
         mvPushMatrix();
+        mPushMatrix();
+        mat4.rotateY(mMatrix, mMatrix, degToRad(eulerY));
         mat4.rotateY(mvMatrix, mvMatrix, degToRad(eulerY));
         mat4.multiply(mvMatrix,vMatrix,mvMatrix);
         setMatrixUniforms();
@@ -370,6 +407,7 @@ function draw() {
             myMesh.drawEdges();
         }   
         mvPopMatrix();
+        mPopMatrix();
     }
   
 }

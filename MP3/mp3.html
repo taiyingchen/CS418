@@ -11,6 +11,8 @@
     attribute vec3 aVertexPosition;
    
     uniform mat4 uMVMatrix;
+    uniform mat4 uVMatrix;
+    uniform mat4 uMMatrix;
     uniform mat4 uPMatrix;
     uniform mat3 uNMatrix;
     
@@ -23,6 +25,8 @@
     uniform vec3 uKDiffuse;
     uniform vec3 uKSpecular;
     uniform float uShininess;
+
+    uniform vec3 uEye;
     
     varying vec4 vColor;
     varying vec3 vDirection;
@@ -66,7 +70,10 @@
     gl_Position = uPMatrix*uMVMatrix*vec4(aVertexPosition, 1.0);
     //vColor=vec4(normalEye,1);
 
-    vDirection = reflect(-viewVectorEye, normalEye);
+    vec3 positionWorld = (uMMatrix * vec4(aVertexPosition, 1.0)).xyz;
+    vec3 normalWorld = normalize(mat3(uMMatrix) * aVertexNormal);
+    vec3 eyeToVertex = normalize(positionWorld - uEye);
+    vDirection = reflect(eyeToVertex, normalWorld);
     }
 </script>
   
@@ -77,6 +84,7 @@ varying vec4 vColor;
 varying vec3 vDirection;
 void main(void) {
   gl_FragColor = textureCube(uTexture, vDirection);
+  // gl_FragColor = vColor;
 }
 </script>
 
