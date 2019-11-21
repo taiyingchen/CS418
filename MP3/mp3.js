@@ -13,8 +13,8 @@ var canvas;
 /** @global A simple GLSL shader program */
 var shaderProgram;
 
-/** @global A simple GLSL skybox shader program */
-var skyboxShaderProgram;
+/** @global A simple GLSL shader program */
+var skyboxProgram;
 
 /** @global The Modelview matrix */
 var mvMatrix = mat4.create();
@@ -40,10 +40,13 @@ var mMatrixStack = [];
 /** @global An object holding the geometry for a 3D mesh */
 var myMesh;
 
+/** @global An object holding the geometry for a skybox mesh */
+var skybox;
+
 
 // View parameters
 /** @global Location of the camera in world coordinates */
-var eyePt = vec3.fromValues(0.0,1.0,10.0);
+var eyePt = vec3.fromValues(0.0,0.0,10.0);
 /** @global Direction of the view in world coordinates */
 var viewDir = vec3.fromValues(0.0,0.0,-1.0);
 /** @global Up vector for view matrix creation, in world coordinates */
@@ -175,9 +178,20 @@ function mPopMatrix() {
  * Sends projection/modelview matrices to shader
  */
 function setMatrixUniforms() {
+    gl.useProgram(shaderProgram);
     uploadModelViewMatrixToShader();
     uploadNormalMatrixToShader();
     uploadProjectionMatrixToShader();
+}
+
+//----------------------------------------------------------------------------------
+/**
+ * Sends projection/modelview matrices to shader
+ */
+function setSkyBoxMatrixUniforms() {
+  gl.useProgram(skyboxProgram);
+  gl.uniformMatrix4fv(skyboxProgram.mvMatrixUniform, false, mvMatrix);
+  gl.uniformMatrix4fv(skyboxProgram.pMatrixUniform, false, pMatrix);
 }
 
 //----------------------------------------------------------------------------------
@@ -265,8 +279,8 @@ function loadShaderFromDOM(id) {
  * Setup the fragment and vertex shaders
  */
 function setupShaders() {
-  vertexShader = loadShaderFromDOM("shader-vs");
-  fragmentShader = loadShaderFromDOM("shader-fs");
+  var vertexShader = loadShaderFromDOM("shader-vs");
+  var fragmentShader = loadShaderFromDOM("shader-fs");
   
   shaderProgram = gl.createProgram();
   gl.attachShader(shaderProgram, vertexShader);
@@ -304,6 +318,33 @@ function setupShaders() {
   setTexture();
 }
 
+function setupSkyboxShaders() {
+  var vertexShader = loadShaderFromDOM("skybox-vs");
+  var fragmentShader = loadShaderFromDOM("skybox-fs");
+
+  skyboxProgram = gl.createProgram();
+  gl.attachShader(skyboxProgram, vertexShader);
+  gl.attachShader(skyboxProgram, fragmentShader);
+  gl.linkProgram(skyboxProgram);
+
+  if (!gl.getProgramParameter(skyboxProgram, gl.LINK_STATUS)) {
+    alert("Failed to setup shaders");
+  }
+
+  gl.useProgram(skyboxProgram);
+
+  skyboxProgram.mvMatrixUniform = gl.getUniformLocation(skyboxProgram, "uMVMatrix");
+  skyboxProgram.pMatrixUniform = gl.getUniformLocation(skyboxProgram, "uPMatrix");
+
+  skyboxProgram.vertexPositionAttribute = gl.getAttribLocation(skyboxProgram, "aVertexPosition");
+  gl.enableVertexAttribArray(skyboxProgram.vertexPositionAttribute);
+  
+  // skyboxProgram.vertexNormalAttribute = gl.getAttribLocation(skyboxProgram, "aVertexNormal");
+  // gl.enableVertexAttribArray(skyboxProgram.vertexNormalAttribute);
+  
+
+}
+
 //-------------------------------------------------------------------------
 /**
  * Sends material information to the shader
@@ -314,7 +355,7 @@ function setupShaders() {
  */
 function setMaterialUniforms(alpha,a,d,s) {
   // Tell the shader to use texture unit 0 for uTexture
-  gl.uniform1i(shaderProgram.uniformTextureLoc, 0.5);
+  gl.uniform1i(shaderProgram.uniformTextureLoc, 0);
   gl.uniform1f(shaderProgram.uniformShininessLoc, alpha);
   gl.uniform3fv(shaderProgram.uniformAmbientMaterialColorLoc, a);
   gl.uniform3fv(shaderProgram.uniformDiffuseMaterialColorLoc, d);
@@ -354,6 +395,11 @@ function setupMesh(filename) {
   })
 }
 
+function setupSkybox(size) {
+  var cube = getCube(size);
+  skybox = getSkybox(cube);
+}
+
 //----------------------------------------------------------------------------------
 /**
  * Draw call that applies matrix transformations to model and draws model in frame
@@ -385,7 +431,7 @@ function draw() {
         mat4.multiply(mvMatrix,vMatrix,mvMatrix);
         setMatrixUniforms();
         setLightUniforms(lightPosition,lAmbient,lDiffuse,lSpecular);
-    
+        
         if ((document.getElementById("polygon").checked) || (document.getElementById("wirepoly").checked))
         {
             setMaterialUniforms(shininess,kAmbient,
@@ -405,7 +451,11 @@ function draw() {
             setMaterialUniforms(shininess,kAmbient,
                                 kEdgeWhite,kSpecular);
             myMesh.drawEdges();
-        }   
+        }
+
+        setSkyBoxMatrixUniforms();
+        skybox.render();
+
         mvPopMatrix();
         mPopMatrix();
     }
@@ -459,8 +509,9 @@ function handleKeyUp(event) {
   canvas = document.getElementById("myGLCanvas");
   gl = createGLContext(canvas);
   setupShaders();
-  // setupMesh("cow.obj");
   setupMesh("teapot.obj");
+  setupSkyboxShaders();
+  setupSkybox(30.0);
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.enable(gl.DEPTH_TEST);
   document.onkeydown = handleKeyDown;
@@ -549,4 +600,61 @@ function setTexture() {
   });
   gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
   gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+}
+
+ /**
+  * Create a model of a cube, centered at the origin.  (This is not
+  * a particularly good format for a cube, since an IFS representation
+  * has a lot of redundancy.)
+  * @side the length of a side of the cube.  If not given, the value will be 1.
+  */
+function getCube(side) {
+  var s = (side || 1)/2;
+  var coords = [];
+  var normals = [];
+  var texCoords = [];
+  var indices = [];
+  function face(xyz, nrm) {
+    var start = coords.length/3;
+    var i;
+    for (i = 0; i < 12; i++) {
+      coords.push(xyz[i]);
+    }
+    for (i = 0; i < 4; i++) {
+      normals.push(nrm[0],nrm[1],nrm[2]);
+    }
+    texCoords.push(0,0,1,0,1,1,0,1);
+    indices.push(start,start+1,start+2,start,start+2,start+3);
+  }
+  face( [-s,-s,s, s,-s,s, s,s,s, -s,s,s], [0,0,1] );
+  face( [-s,-s,-s, -s,s,-s, s,s,-s, s,-s,-s], [0,0,-1] );
+  face( [-s,s,-s, -s,s,s, s,s,s, s,s,-s], [0,1,0] );
+  face( [-s,-s,-s, s,-s,-s, s,-s,s, -s,-s,s], [0,-1,0] );
+  face( [s,-s,-s, s,s,-s, s,s,s, s,-s,s], [1,0,0] );
+  face( [-s,-s,-s, -s,-s,s, -s,s,s, -s,s,-s], [-1,0,0] );
+  return {
+    vertexPositions: new Float32Array(coords),
+    vertexNormals: new Float32Array(normals),
+    vertexTextureCoords: new Float32Array(texCoords),
+    indices: new Uint16Array(indices)
+  }
+}
+
+function getSkybox(modelData) {
+  var model = {};
+  model.coordsBuffer = gl.createBuffer();
+  model.indexBuffer = gl.createBuffer();
+  model.count = modelData.indices.length;
+  gl.bindBuffer(gl.ARRAY_BUFFER, model.coordsBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, modelData.vertexPositions, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, model.indexBuffer);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, modelData.indices, gl.STATIC_DRAW);
+  model.render = function() {
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.coordsBuffer);
+    gl.vertexAttribPointer(skyboxProgram.vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+    gl.drawElements(gl.TRIANGLES, this.count, gl.UNSIGNED_SHORT, 0);
+    console.log(this.count);
+  }
+  return model;
 }
