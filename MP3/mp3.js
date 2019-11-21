@@ -190,7 +190,7 @@ function setMatrixUniforms() {
  */
 function setSkyBoxMatrixUniforms() {
   gl.useProgram(skyboxProgram);
-  gl.uniformMatrix4fv(skyboxProgram.mvMatrixUniform, false, mvMatrix);
+  gl.uniformMatrix4fv(skyboxProgram.mvMatrixUniform, false, vMatrix);
   gl.uniformMatrix4fv(skyboxProgram.pMatrixUniform, false, pMatrix);
 }
 
@@ -314,8 +314,6 @@ function setupShaders() {
   shaderProgram.uniformSpecularMaterialColorLoc = gl.getUniformLocation(shaderProgram, "uKSpecular");
   shaderProgram.uniformTextureLoc = gl.getUniformLocation(shaderProgram, "uTexture");
   shaderProgram.uniformEyeLoc = gl.getUniformLocation(shaderProgram, "uEye");
-
-  setTexture();
 }
 
 function setupSkyboxShaders() {
@@ -512,6 +510,7 @@ function handleKeyUp(event) {
   setupMesh("teapot.obj");
   setupSkyboxShaders();
   setupSkybox(30.0);
+  setTexture();
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.enable(gl.DEPTH_TEST);
   document.onkeydown = handleKeyDown;
