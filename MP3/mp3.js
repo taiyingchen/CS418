@@ -46,7 +46,7 @@ var skybox;
 
 // View parameters
 /** @global Location of the camera in world coordinates */
-var eyePt = vec3.fromValues(0.0,0.0,10.0);
+var eyePt = vec3.fromValues(0.0,1.0,10.0);
 /** @global Direction of the view in world coordinates */
 var viewDir = vec3.fromValues(0.0,0.0,-1.0);
 /** @global Up vector for view matrix creation, in world coordinates */
@@ -190,7 +190,7 @@ function setMatrixUniforms() {
  */
 function setSkyBoxMatrixUniforms() {
   gl.useProgram(skyboxProgram);
-  gl.uniformMatrix4fv(skyboxProgram.mvMatrixUniform, false, vMatrix);
+  gl.uniformMatrix4fv(skyboxProgram.vMatrixUniform, false, vMatrix);
   gl.uniformMatrix4fv(skyboxProgram.pMatrixUniform, false, pMatrix);
 }
 
@@ -331,7 +331,7 @@ function setupSkyboxShaders() {
 
   gl.useProgram(skyboxProgram);
 
-  skyboxProgram.mvMatrixUniform = gl.getUniformLocation(skyboxProgram, "uMVMatrix");
+  skyboxProgram.vMatrixUniform = gl.getUniformLocation(skyboxProgram, "uVMatrix");
   skyboxProgram.pMatrixUniform = gl.getUniformLocation(skyboxProgram, "uPMatrix");
 
   skyboxProgram.vertexPositionAttribute = gl.getAttribLocation(skyboxProgram, "aVertexPosition");
@@ -469,10 +469,10 @@ function handleKeyDown(event) {
         currentlyPressedKeys[event.key] = true;
           if (currentlyPressedKeys["a"]) {
             // key A
-            eulerY-= 10;
+            eulerY = (eulerY - 10 + 360) % 360;
         } else if (currentlyPressedKeys["d"]) {
             // key D
-            eulerY+= 10;
+            eulerY = (eulerY + 10 + 360) % 360;
         } 
     
         if (currentlyPressedKeys["ArrowLeft"]){
@@ -653,7 +653,6 @@ function getSkybox(modelData) {
     gl.vertexAttribPointer(skyboxProgram.vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
     gl.drawElements(gl.TRIANGLES, this.count, gl.UNSIGNED_SHORT, 0);
-    console.log(this.count);
   }
   return model;
 }
