@@ -183,11 +183,19 @@ function mPopMatrix() {
  */
 function setMatrixUniforms() {
     gl.useProgram(shaderProgram);
-    gl.uniform1i(shaderProgram.uniformTextureTypeLoc, textureType);
-    gl.uniform1i(shaderProgram.uniformPhongLoc, phong);
+    uploadParametersToShader();
     uploadModelViewMatrixToShader();
     uploadNormalMatrixToShader();
     uploadProjectionMatrixToShader();
+}
+
+//----------------------------------------------------------------------------------
+/**
+ * Sends parameters indicating which texture and shading to apply
+ */
+function uploadParametersToShader() {
+  gl.uniform1i(shaderProgram.uniformTextureTypeLoc, textureType);
+  gl.uniform1i(shaderProgram.uniformPhongLoc, phong);
 }
 
 //----------------------------------------------------------------------------------
@@ -324,6 +332,10 @@ function setupShaders() {
   shaderProgram.uniformPhongLoc = gl.getUniformLocation(shaderProgram, "uPhong");
 }
 
+//----------------------------------------------------------------------------------
+/**
+ * Setup the fragment and vertex shaders for skybox
+ */
 function setupSkyboxShaders() {
   var vertexShader = loadShaderFromDOM("skybox-vs");
   var fragmentShader = loadShaderFromDOM("skybox-fs");
@@ -514,10 +526,13 @@ function handleKeyUp(event) {
  function startup() {
   canvas = document.getElementById("myGLCanvas");
   gl = createGLContext(canvas);
+  // Set up shader and mesh for the teapot
   setupShaders();
   setupMesh("teapot.obj");
+  // Set up shader and mesh for the skybox
   setupSkyboxShaders();
   setupSkybox(30.0);
+  // Set up texture for both teapot and skybox
   setTexture();
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.enable(gl.DEPTH_TEST);
@@ -534,6 +549,8 @@ function handleKeyUp(event) {
 function animate() {
   document.getElementById("eY").value=eulerY;
   document.getElementById("eZ").value=eyePt[2];
+  // If phong is true, use phong shading
+  // Else use enviroment mapping
   if ((document.getElementById("phong").checked)) {
     textureType = 0;
     phong = true;
@@ -559,7 +576,9 @@ function tick() {
 }
 
 
-
+/**
+ * Create a texture with cubebox in WebGL
+ */
 function setTexture() {
   // Create a texture.
   var texture = gl.createTexture();
@@ -657,6 +676,11 @@ function getCube(side) {
   }
 }
 
+/**
+ * Get a mesh model from given model data
+ * Call render function to draw the mesh
+ * @param {Object} modelData 
+ */
 function getSkybox(modelData) {
   var model = {};
   model.coordsBuffer = gl.createBuffer();
