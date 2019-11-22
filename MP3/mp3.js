@@ -58,23 +58,23 @@ var thetaRate = 5;
 
 //Light parameters
 /** @global Light position in VIEW coordinates */
-var lightPosition = [0,5,5];
+var lightPosition = [10,10,10];
 /** @global Ambient light color/intensity for Phong reflection */
 var lAmbient = [0,0,0];
 /** @global Diffuse light color/intensity for Phong reflection */
 var lDiffuse = [1,1,1];
 /** @global Specular light color/intensity for Phong reflection */
-var lSpecular =[0,0,0];
+var lSpecular =[1,1,1];
 
 //Material parameters
 /** @global Ambient material color/intensity for Phong reflection */
 var kAmbient = [1.0,1.0,1.0];
 /** @global Diffuse material color/intensity for Phong reflection */
-var kTerrainDiffuse = [205.0/255.0,163.0/255.0,63.0/255.0];
+var kTerrainDiffuse = [137.0/255.0,241.0/255.0,245.0/255.0];
 /** @global Specular material color/intensity for Phong reflection */
-var kSpecular = [0.0,0.0,0.0];
+var kSpecular = [0.5,0.5,0.5];
 /** @global Shininess exponent for Phong reflection */
-var shininess = 23;
+var shininess = 200;
 /** @global Edge color fpr wireframeish rendering */
 var kEdgeBlack = [0.0,0.0,0.0];
 /** @global Edge color for wireframe rendering */
@@ -83,7 +83,9 @@ var kEdgeWhite = [1.0,1.0,1.0];
 
 //Model parameters
 var eulerY=0;
+// Indicate reflective or refractive for vertex shader
 var textureType;
+// Indicate phong shading or texture mapping for fragment shader
 var phong;
 
 //-------------------------------------------------------------------------
