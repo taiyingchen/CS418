@@ -340,10 +340,10 @@ function loadColorsLogo() {
   vertexColorBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer);
   var blue = [
-    19/256, 41/256, 74/256, 1.0
+    19.0/255.0, 41.0/255.0, 74.0/255.0, 1.0
   ];
   var orange = [
-    234/256, 76/256, 39/256, 1.0
+    234.0/255.0, 76.0/255.0, 39.0/255.0, 1.0
   ];
   var colors = [];
 
