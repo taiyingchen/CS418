@@ -2,8 +2,8 @@
 
 ## Results
 
-Pressing <kbd>left</kbd>, <kbd>right</kbd>, <kbd>up</kbd>, and <kbd>down</kbd> to orbit around the teapot
-Pressing <kbd>a</kbd> and <kbd>d</kbd> to rotate the teapot
+* Pressing <kbd>left</kbd>, <kbd>right</kbd>, <kbd>up</kbd>, and <kbd>down</kbd> to orbit around the teapot
+* Pressing <kbd>a</kbd> and <kbd>d</kbd> to rotate the teapot
 
 ![Animation](imgs/animation.gif)
 
