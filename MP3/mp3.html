@@ -18,10 +18,12 @@ uniform mat3 uNMatrix;
 
 uniform vec3 uEye;
 uniform int uTextureType;
+uniform vec3 uLightPosition;
 
 varying vec3 vDirection;
 varying vec3 vPosition;
 varying vec3 vNormal;
+varying vec3 vLight;
 
 void main(void) {
   // Get the vertex position in eye coordinates
@@ -30,6 +32,8 @@ void main(void) {
   
   // Transform the normal (n) to eye coordinates
   vNormal = normalize(uNMatrix * aVertexNormal);
+
+  vLight = (uVMatrix * vec4(uLightPosition, 1.0)).xyz;
               
   gl_Position = uPMatrix*uMVMatrix*vec4(aVertexPosition, 1.0);
 
@@ -47,7 +51,6 @@ void main(void) {
 <script id="shader-fs" type="x-shader/x-fragment">
 precision mediump float;
 
-uniform vec3 uLightPosition;
 uniform vec3 uAmbientLightColor;
 uniform vec3 uDiffuseLightColor;
 uniform vec3 uSpecularLightColor;
@@ -63,10 +66,11 @@ uniform bool uPhong;
 varying vec3 vPosition;
 varying vec3 vNormal;
 varying vec3 vDirection;
+varying vec3 vLight;
 
 void main(void) {
   // Calculate the vector (l) to the light source
-  vec3 lightEye=(vec4(uLightPosition,1)).xyz;
+  vec3 lightEye = vLight;
   vec3 vectorToLightSource = normalize(lightEye - vPosition);
 
   // Calculate n dot l for diffuse lighting
