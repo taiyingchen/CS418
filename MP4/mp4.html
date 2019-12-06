@@ -26,42 +26,40 @@
     varying vec4 vColor;
 
     void main(void) {
+        // Get the vertex position in eye coordinates
+        vec4 vertexPositionEye4 = uMVMatrix * vec4(aVertexPosition, 1.0);
+        vec3 vertexPositionEye3 = vertexPositionEye4.xyz / vertexPositionEye4.w;
 
-    // Get the vertex position in eye coordinates
-    vec4 vertexPositionEye4 = uMVMatrix * vec4(aVertexPosition, 1.0);
-    vec3 vertexPositionEye3 = vertexPositionEye4.xyz / vertexPositionEye4.w;
+        // Calculate the vector (l) to the light source
+        vec3 vectorToLightSource = normalize(uLightPosition - vertexPositionEye3);
 
-    // Calculate the vector (l) to the light source
-    vec3 vectorToLightSource = normalize(uLightPosition - vertexPositionEye3);
+        // Transform the normal (n) to eye coordinates
+        vec3 normalEye = normalize(uNMatrix * aVertexNormal);
 
-    // Transform the normal (n) to eye coordinates
-    vec3 normalEye = normalize(uNMatrix * aVertexNormal);
+        // Calculate n dot l for diffuse lighting
+        float diffuseLightWeightning = max(dot(normalEye, 
+                                        vectorToLightSource), 0.0);
+                                            
+        // Calculate the reflection vector (r) that is needed for specular light
+        vec3 reflectionVector = normalize(reflect(-vectorToLightSource, 
+                                                    normalEye));
 
-    // Calculate n dot l for diffuse lighting
-    float diffuseLightWeightning = max(dot(normalEye, 
-                                    vectorToLightSource), 0.0);
-                                        
-    // Calculate the reflection vector (r) that is needed for specular light
-    vec3 reflectionVector = normalize(reflect(-vectorToLightSource, 
-                                                normalEye));
+        // The camera in eye coordinates is located in the origin and is pointing
+        // along the negative z-axis. Calculate viewVector (v) 
+        // in eye coordinates as:
+        // (0.0, 0.0, 0.0) - vertexPositionEye3
+        vec3 viewVectorEye = -normalize(vertexPositionEye3);
 
-    // The camera in eye coordinates is located in the origin and is pointing
-    // along the negative z-axis. Calculate viewVector (v) 
-    // in eye coordinates as:
-    // (0.0, 0.0, 0.0) - vertexPositionEye3
-    vec3 viewVectorEye = -normalize(vertexPositionEye3);
+        float rdotv = max(dot(reflectionVector, viewVectorEye), 0.0);
 
-    float rdotv = max(dot(reflectionVector, viewVectorEye), 0.0);
+        float specularLightWeightning = pow(rdotv, uShininess);
 
-    float specularLightWeightning = pow(rdotv, uShininess);
-
-    // Sum up all three reflection components and send to the fragment shader
-    vColor = vec4(((uAmbientLightColor*uAmbientMaterialColor)
-                + (uDiffuseLightColor*uDiffuseMaterialColor) * diffuseLightWeightning
-                + (uSpecularLightColor*uSpecularMaterialColor) * specularLightWeightning),1.0);
+        // Sum up all three reflection components and send to the fragment shader
+        vColor = vec4(((uAmbientLightColor*uAmbientMaterialColor)
+                    + (uDiffuseLightColor*uDiffuseMaterialColor) * diffuseLightWeightning
+                    + (uSpecularLightColor*uSpecularMaterialColor) * specularLightWeightning),1.0);
 
         gl_Position = uPMatrix*uMVMatrix*vec4(aVertexPosition, 1.0);
-        
     }
 </script>
 
