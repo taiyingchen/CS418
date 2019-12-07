@@ -4,8 +4,6 @@ var canvas;
 var shaderProgram;
 var vertexPositionBuffer;
 
-var days = 0;
-
 
 // Create a place to store sphere geometry
 var sphereVertexPositionBuffer;
@@ -14,7 +12,7 @@ var sphereVertexPositionBuffer;
 var sphereVertexNormalBuffer;
 
 // View parameters
-var eyePt = vec3.fromValues(0.0, 0.0, 150.0);
+var eyePt = vec3.fromValues(0.0, 0.0, 5.0);
 var viewDir = vec3.fromValues(0.0, 0.0, -1.0);
 var up = vec3.fromValues(0.0, 1.0, 0.0);
 var viewPt = vec3.fromValues(0.0, 0.0, 0.0);
@@ -29,6 +27,9 @@ var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
 
 var mvMatrixStack = [];
+
+var particles = [];
+var numParticles = 10;
 
 //-----------------------------------------------------------------
 //Color conversion  helper functions
@@ -305,14 +306,14 @@ function setupBuffers() {
 /**
  * Draw call that applies matrix transformations to model and draws model in frame
  */
-function draw() {
+function draw(i) {
     var transformVec = vec3.create();
 
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // We'll use perspective 
     mat4.perspective(pMatrix, degToRad(45), gl.viewportWidth / gl.viewportHeight, 0.1, 200.0);
+    // mat4.identity(pMatrix);
 
     // We want to look down -z, so create a lookat point in that direction    
     vec3.add(viewPt, eyePt, viewDir);
@@ -320,18 +321,21 @@ function draw() {
     mat4.lookAt(mvMatrix, eyePt, viewPt, up);
 
     mvPushMatrix();
-    vec3.set(transformVec, 20, 20, 20);
-    mat4.scale(mvMatrix, mvMatrix, transformVec);
+
+    // Translate position
+    particles[i].updatePosition(1 / 10);
+    particles[i].updateVelocity(1 / 10);
+
+    mat4.translate(mvMatrix, mvMatrix, particles[i].position);
+    mat4.scale(mvMatrix, mvMatrix, particles[i].radius);
 
     //Get material color
-    colorVal = document.getElementById("mat-color").value
-    console.log(colorVal);
-    R = hexToR(colorVal) / 255.0;
-    G = hexToG(colorVal) / 255.0;
-    B = hexToB(colorVal) / 255.0;
+    R = particles[i].R;
+    G = particles[i].G;
+    B = particles[i].B;
 
     //Get shiny
-    shiny = document.getElementById("shininess").value
+    shiny = 100;
 
     uploadLightsToShader([20, 20, 20], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]);
     uploadMaterialToShader([R, G, B], [R, G, B], [1.0, 1.0, 1.0], shiny);
@@ -340,6 +344,11 @@ function draw() {
     mvPopMatrix();
 }
 
+function setupParticles() {
+    for (var i = particles.length; i < numParticles; i++) {
+        particles.push(new Particle());
+    }
+}
 
 
 //----------------------------------------------------------------------------------
@@ -363,6 +372,8 @@ function startup() {
     setupBuffers();
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
+    document.onkeydown = handleKeyDown;
+    document.onkeyup = handleKeyUp;
     tick();
 }
 
@@ -372,5 +383,80 @@ function startup() {
  */
 function tick() {
     requestAnimFrame(tick);
-    draw();
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    setupParticles();
+    for (let i = 0; i < numParticles; i++) {
+        draw(i);
+    }
+}
+
+//----------------------------------------------------------------------------------
+/**
+ * Code to handle user interaction
+ */
+var currentlyPressedKeys = {};
+
+function handleKeyDown(event) {
+    //console.log("Key down ", event.key, " code ", event.code);
+    currentlyPressedKeys[event.key] = true;
+    if (currentlyPressedKeys["a"]) {
+        // key A
+        numParticles += 1;
+    } else if (currentlyPressedKeys["r"]) {
+        // key r
+        particles = [];
+        numParticles = 10;
+    }
+}
+
+function handleKeyUp(event) {
+    //console.log("Key up ", event.key, " code ", event.code);
+    currentlyPressedKeys[event.key] = false;
+}
+
+class Particle {
+    constructor() {
+        this.position = vec3.create();
+        this.velocity = vec3.create();
+        this.acceleration = vec3.fromValues(0, -0.5, 0);
+
+        this.drag = 0.95;
+        this.box_size = 1;
+        this.R = Math.random();
+        this.G = Math.random();
+        this.B = Math.random();
+        this.radius = (2 + Math.random() * 2) / 30; // Between 2 to 5
+        this.radius = vec3.fromValues(this.radius, this.radius, this.radius);
+
+        // vec3.random(this.position, this.box_size);
+        vec3.random(this.velocity, 1);
+    }
+
+    updatePosition(time) {
+        var addFromVelocity = vec3.create();
+        vec3.scale(addFromVelocity, this.velocity, time);
+        vec3.add(this.position, this.position, addFromVelocity);
+
+        if (this.position[0] < -this.box_size || this.position[0] > this.box_size) {
+            this.position[0] = this.position[0] < 0 ? -this.box_size : this.box_size;
+            this.velocity[0] = -this.velocity[0];
+        }
+        if (this.position[1] < -this.box_size || this.position[1] > this.box_size) {
+            this.position[1] = this.position[1] < 0 ? -this.box_size : this.box_size;
+            this.velocity[1] = -this.velocity[1];
+        }
+        if (this.position[2] < -this.box_size || this.position[2] > this.box_size) {
+            this.position[2] = this.position[2] < 0 ? -this.box_size : this.box_size;
+            this.velocity[2] = -this.velocity[2];
+        }
+    }
+
+    updateVelocity(time) {
+        var addFromAcc = vec3.create();
+
+        vec3.scale(this.velocity, this.velocity, Math.pow(this.drag, time));
+        vec3.scale(addFromAcc, this.acceleration, time);
+        vec3.add(this.velocity, this.velocity, addFromAcc);
+    }
 }
