@@ -426,6 +426,8 @@ function handleKeyDown(event) {
     } else if (currentlyPressedKeys["d"]) {
         particles = []
         numParticles = 0;
+    } else if (currentlyPressedKeys["s"]) {
+        numParticles += 10;
     }
 }
 
