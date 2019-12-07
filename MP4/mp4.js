@@ -1,4 +1,9 @@
 
+/**
+ * @file Create particles with different position and velocity
+ * @author Taiying Chen <tychen2@illinois.edu>  
+ */
+
 var gl;
 var canvas;
 var shaderProgram;
@@ -313,7 +318,6 @@ function draw(i) {
 
     // We'll use perspective 
     mat4.perspective(pMatrix, degToRad(45), gl.viewportWidth / gl.viewportHeight, 0.1, 200.0);
-    // mat4.identity(pMatrix);
 
     // We want to look down -z, so create a lookat point in that direction    
     vec3.add(viewPt, eyePt, viewDir);
@@ -322,10 +326,9 @@ function draw(i) {
 
     mvPushMatrix();
 
-    // Translate position
+    // Translate position and scale particle
     particles[i].updatePosition(1 / 10);
     particles[i].updateVelocity(1 / 10);
-
     mat4.translate(mvMatrix, mvMatrix, particles[i].position);
     mat4.scale(mvMatrix, mvMatrix, particles[i].radius);
 
@@ -344,6 +347,10 @@ function draw(i) {
     mvPopMatrix();
 }
 
+/**
+ * Check every frame letting lengh of particles list meet numParticles
+ * Check the gravity and bouncing wall settings
+ */
 function setupParticles() {
     for (var i = particles.length; i < numParticles; i++) {
         particles.push(new Particle());
@@ -417,25 +424,30 @@ function handleKeyDown(event) {
     //console.log("Key down ", event.key, " code ", event.code);
     currentlyPressedKeys[event.key] = true;
     if (currentlyPressedKeys["a"]) {
-        // key A
+        // key a: add 1 particle
         numParticles += 1;
-    } else if (currentlyPressedKeys["r"]) {
-        // key r
-        particles = [];
-        numParticles = 10;
+    } else if (currentlyPressedKeys["s"]) {
+        // key s: add 10 particles
+        numParticles += 10;
     } else if (currentlyPressedKeys["d"]) {
+        // key d: remove all particles
         particles = []
         numParticles = 0;
-    } else if (currentlyPressedKeys["s"]) {
-        numParticles += 10;
+    } else if (currentlyPressedKeys["r"]) {
+        // key r: reset
+        particles = [];
+        numParticles = 10;
     }
 }
 
 function handleKeyUp(event) {
-    //console.log("Key up ", event.key, " code ", event.code);
     currentlyPressedKeys[event.key] = false;
 }
 
+
+/**
+ * Class to store particle information
+ */
 class Particle {
     constructor() {
         this.position = vec3.create();
@@ -448,7 +460,7 @@ class Particle {
         this.R = Math.random();
         this.G = Math.random();
         this.B = Math.random();
-        this.radius = (2 + Math.random() * 2) / 30; // Between 2 to 5
+        this.radius = (2 + Math.random() * 2) / 30; // Between (2 to 4) / 30
         this.radius = vec3.fromValues(this.radius, this.radius, this.radius);
 
         // vec3.random(this.position, this.box_size);
@@ -456,10 +468,12 @@ class Particle {
     }
 
     updatePosition(time) {
+        // position = position + velocity * time
         var addFromVelocity = vec3.create();
         vec3.scale(addFromVelocity, this.velocity, time);
         vec3.add(this.position, this.position, addFromVelocity);
 
+        // Sphere-wall collision detection 
         if (this.position[0] < -this.box_size || this.position[0] > this.box_size) {
             this.position[0] = this.position[0] < 0 ? -this.box_size : this.box_size;
             this.velocity[0] = -this.wall_acceleration * this.velocity[0];
@@ -475,8 +489,8 @@ class Particle {
     }
 
     updateVelocity(time) {
+        // velocity = velocity * d^t + acceleration * time
         var addFromAcc = vec3.create();
-
         vec3.scale(this.velocity, this.velocity, Math.pow(this.drag, time));
         vec3.scale(addFromAcc, this.acceleration, time);
         vec3.add(this.velocity, this.velocity, addFromAcc);
