@@ -348,6 +348,22 @@ function setupParticles() {
     for (var i = particles.length; i < numParticles; i++) {
         particles.push(new Particle());
     }
+
+    for (var i = 0; i < particles.length; i++) {
+        if (document.getElementById("normal-gravity").checked) {
+            particles[i].acceleration = vec3.fromValues(0, -0.5, 0);
+        } else if (document.getElementById("reverse-gravity").checked) {
+            particles[i].acceleration = vec3.fromValues(0, 0.5, 0);
+        } else if (document.getElementById("zero-gravity").checked) {
+            particles[i].acceleration = vec3.fromValues(0, 0, 0);
+        }
+
+        if (document.getElementById("bounce-on").checked) {
+            particles[i].wall_acceleration = 1.1;
+        } else if (document.getElementById("bounce-off").checked) {
+            particles[i].wall_acceleration = 1.0;
+        }
+    }
 }
 
 
@@ -407,6 +423,9 @@ function handleKeyDown(event) {
         // key r
         particles = [];
         numParticles = 10;
+    } else if (currentlyPressedKeys["d"]) {
+        particles = []
+        numParticles = 0;
     }
 }
 
@@ -420,6 +439,7 @@ class Particle {
         this.position = vec3.create();
         this.velocity = vec3.create();
         this.acceleration = vec3.fromValues(0, -0.5, 0);
+        this.wall_acceleration = 1;
 
         this.drag = 0.95;
         this.box_size = 1;
@@ -440,15 +460,15 @@ class Particle {
 
         if (this.position[0] < -this.box_size || this.position[0] > this.box_size) {
             this.position[0] = this.position[0] < 0 ? -this.box_size : this.box_size;
-            this.velocity[0] = -this.velocity[0];
+            this.velocity[0] = -this.wall_acceleration * this.velocity[0];
         }
         if (this.position[1] < -this.box_size || this.position[1] > this.box_size) {
             this.position[1] = this.position[1] < 0 ? -this.box_size : this.box_size;
-            this.velocity[1] = -this.velocity[1];
+            this.velocity[1] = -this.wall_acceleration * this.velocity[1];
         }
         if (this.position[2] < -this.box_size || this.position[2] > this.box_size) {
             this.position[2] = this.position[2] < 0 ? -this.box_size : this.box_size;
-            this.velocity[2] = -this.velocity[2];
+            this.velocity[2] = -this.wall_acceleration * this.velocity[2];
         }
     }
 

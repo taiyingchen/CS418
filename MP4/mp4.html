@@ -81,6 +81,25 @@
 
 <body onload="startup();">
     <canvas id="myGLCanvas" width="700" height="700"></canvas>
+
+    <form>
+        Press <kbd>a</kbd> to add particle <br>
+        Press <kbd>d</kbd> to remove all particles <br>
+        Press <kbd>r</kbd> to reset
+
+        <fieldset>
+            <legend>Gravity</legend>
+            <input type="radio" name="gravity" id="normal-gravity" checked> Normal
+            <input type="radio" name="gravity" id="zero-gravity"> Zero
+            <input type="radio" name="gravity" id="reverse-gravity"> Reverse
+        </fieldset>
+        
+        <fieldset>
+            <legend>Bouncing Wall</legend>
+            <input type="radio" name="wall" id="bounce-on"> On
+            <input type="radio" name="wall" id="bounce-off" checked> Off
+        </fieldset>
+    </form>
 </body>
 
 </html>
