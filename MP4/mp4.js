@@ -463,7 +463,7 @@ class Particle {
         this.radius = (2 + Math.random() * 2) / 30; // Between (2 to 4) / 30
         this.radius = vec3.fromValues(this.radius, this.radius, this.radius);
 
-        // vec3.random(this.position, this.box_size);
+        vec3.random(this.position, this.box_size);
         vec3.random(this.velocity, 1);
     }
 
