@@ -473,19 +473,13 @@ class Particle {
         vec3.scale(addFromVelocity, this.velocity, time);
         vec3.add(this.position, this.position, addFromVelocity);
 
-        // Sphere-wall collision detection 
-        if (this.position[0] < -this.box_size || this.position[0] > this.box_size) {
-            this.position[0] = this.position[0] < 0 ? -this.box_size : this.box_size;
-            this.velocity[0] = -this.wall_acceleration * this.velocity[0];
-        }
-        if (this.position[1] < -this.box_size || this.position[1] > this.box_size) {
-            this.position[1] = this.position[1] < 0 ? -this.box_size : this.box_size;
-            this.velocity[1] = -this.wall_acceleration * this.velocity[1];
-        }
-        if (this.position[2] < -this.box_size || this.position[2] > this.box_size) {
-            this.position[2] = this.position[2] < 0 ? -this.box_size : this.box_size;
-            this.velocity[2] = -this.wall_acceleration * this.velocity[2];
-        }
+        // Sphere-wall collision detection
+        for (var i = 0; i < this.position.length; i++) {
+            if (this.position[i] < -this.box_size || this.position[i] > this.box_size) {
+                this.position[i] = this.position[i] < 0 ? -this.box_size : this.box_size;
+                this.velocity[i] = -this.wall_acceleration * this.velocity[i];
+            }
+        } 
     }
 
     updateVelocity(time) {
