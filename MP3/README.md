@@ -5,19 +5,19 @@
 * Pressing <kbd>left</kbd>, <kbd>right</kbd>, <kbd>up</kbd>, and <kbd>down</kbd> to orbit around the teapot
 * Pressing <kbd>a</kbd> and <kbd>d</kbd> to rotate the teapot
 
-![Animation](imgs/animation.gif)
+![Animation](img/animation.gif)
 
 Phong Shading Teapot
 
-![Phong](imgs/phong.png)
+![Phong](img/phong.png)
 
 Reflection Teapot
 
-![Reflection](imgs/reflection.png)
+![Reflection](img/reflection.png)
 
 Refraction Teapot
 
-![Refraction](imgs/refraction.png)
+![Refraction](img/refraction.png)
 
 ## Goal
 
