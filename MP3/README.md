@@ -2,7 +2,7 @@
 
 ## Results
 
-[mp3.html](mp3.html)
+### [DEMO](mp3.html)
 
 * Pressing <kbd>left</kbd>, <kbd>right</kbd>, <kbd>up</kbd>, and <kbd>down</kbd> to orbit around the teapot
 * Pressing <kbd>a</kbd> and <kbd>d</kbd> to rotate the teapot
