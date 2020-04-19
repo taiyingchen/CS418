@@ -6,7 +6,7 @@ To complete the MP, you will need to create a digital model of the logo, write c
 
 ## Results
 
-[mp1.html](mp1.html)
+[**DEMO**](mp1.html)
 
 ![Logo Animation](img/logoAnimation.gif)
 
