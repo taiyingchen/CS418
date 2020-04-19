@@ -4,9 +4,9 @@ For your first Machine Problem, you will create a 2-D animation of the majestic 
 
 To complete the MP, you will need to create a digital model of the logo, write code to render it, and write code to animate it.
 
-## [DEMO](mp1.html)
-
 ## Results
+
+[**DEMO**](mp1.html)
 
 ![Logo Animation](img/logoAnimation.gif)
 
